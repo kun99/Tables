@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'dart:io';
+import 'my_entry.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -10,49 +13,22 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-int number = 1;
 final _homeworkController = TextEditingController();
 final _courseController = TextEditingController();
 final _dateController = TextEditingController();
 
-List<String> _labelOnes = ['Homework', 'Subscriptions'];
-List<String> _labelTwos = ['Course name',  'Company name'];
+List<String> _labelOnes = ['Homework', 'Subscription'];
+List<String> _labelTwos = ['Course name',  'Cost'];
 List<String> _labelThrees = ['Due date', 'Starting'];
-
-final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-late Future<List> _table;
 
 List<Widget> _tablePages = <Widget> [
   const HomeworksPage(),
   const SubscriptionsPage(),
 ];
 
-var test = {};
-
 int _selectedIndex = 0;
 
 class _HomePageState extends State<HomePage> {
-
-  Future<void> _addRow(String row) async {
-    final SharedPreferences prefs = await _prefs;
-    final List<String> table = prefs.getStringList('table') ?? [];
-    table.add(row);
-
-    setState(() {
-      _table = prefs.setStringList('table', table).then((bool success) {
-        return table;
-      });
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _table = _prefs.then((SharedPreferences prefs) {
-      //prefs.clear();
-      return prefs.getStringList('table') ?? [];
-    });
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -69,7 +45,7 @@ class _HomePageState extends State<HomePage> {
           'An App of Tables'
         ),
       ),
-      body: Center(
+      body: Container(
         child: _tablePages.elementAt(_selectedIndex),
       ),
       floatingActionButton: FloatingActionButton(
@@ -93,20 +69,20 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     TextField(
-                        controller: _dateController,
+                      controller: _dateController,
                         decoration: InputDecoration(
                           icon: const Icon(Icons.calendar_today),
                           labelText: _labelThrees[_selectedIndex],
                         ),
                         onTap: () async {
                           DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime(2030)
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2030)
                           );
                           if(pickedDate != null ){
-                            String formattedDate = DateFormat.yMMMd().format(pickedDate);
+                            String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
                             setState(() {
                               _dateController.text = formattedDate;
                             });
@@ -122,10 +98,18 @@ class _HomePageState extends State<HomePage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      _addRow(_homeworkController.text+_courseController.text+_dateController.text);
+                    setState(() async {
                       Navigator.pop(context, 'OK');
-                      print(_homeworkController.text+_courseController.text+_dateController.text);
+                      await DatabaseHelper.instance.add(
+                        MyEntry(
+                          desc: _homeworkController.text,
+                          source: _courseController.text,
+                          date: _dateController.text,
+                        ),
+                      );
+                      _homeworkController.clear();
+                      _courseController.clear();
+                      _dateController.clear();
                     });
                   },
                   child: const Text('OK'),
@@ -166,46 +150,46 @@ class HomeworksPage extends StatefulWidget {
 class _HomeworksPageState extends State<HomeworksPage> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Row(
-            children: <Widget> [
-              Text('Number'),
-              Text('Homework'),
-              Text('Course'),
-              Text('Due Date'),
-              Text('Priority'),
-            ]
-        ),
-        Row(
-          children: [
-            FutureBuilder(
-              future: _table,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                switch (snapshot.connectionState) {
-                  case ConnectionState.none:
-                  case ConnectionState.waiting:
-                  case ConnectionState.active:
-                  case ConnectionState.done:
-                    if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    }
-                    else {
-                      // List table = snapshot.data;
-                      // String entries = "";
-                      // for(int i=0; i < table.length; i++){
-                      //   '${entries + table[i]}\n';
-                      // }
-                      return Text(
-                          '${snapshot.data}\n\n'
-                      );
-                    }
-                }
-              },
-            )
+    return FutureBuilder<List<MyEntry>>(
+      future: DatabaseHelper.instance.getEntries(),
+      builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+      if (!snapshot.hasData) {
+        return const Center(child: Text('Loading...'));
+      }
+      return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
+        DataTable(
+          columnSpacing: 44.0,
+          columns: const [
+            DataColumn(
+              label: Text('Homework'),
+            ),
+            DataColumn(
+              label: Text('Course'),
+            ),
+            DataColumn(
+              label: Text('Due date'),
+            ),
+            DataColumn(
+              label: Text(''),
+            ),
           ],
-        )
-      ],
+          rows: snapshot.data!.map((entry) => DataRow(
+            cells: [
+              DataCell(Text(entry.desc)),
+              DataCell(Text(entry.source)),
+              DataCell(Text(entry.date.toString())),
+              DataCell(IconButton(
+                icon: const Icon(Icons.cancel),
+                onPressed: () {
+                  setState(() {
+                    DatabaseHelper.instance.delete(entry.id);
+                  });
+                },
+              )),
+            ]
+          )).toList(),
+        );
+      }
     );
   }
 }
@@ -220,19 +204,105 @@ class SubscriptionsPage extends StatefulWidget {
 class _SubscriptionsPageState extends State<SubscriptionsPage> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Row(
-            children: const <Widget> [
-              Text('Number'),
-              Text('Subscription'),
-              Text('Company'),
-              Text('Since'),
-              Text('Priority'),
+    return FutureBuilder<List<MyEntry>>(
+      future: DatabaseHelper.instance.getEntries(),
+      builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+      if(!snapshot.hasData) {
+        return const Center(child: Text('Loading...'));
+      }
+      return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
+        DataTable(
+          columnSpacing: 35.0,
+          columns: const [
+            DataColumn(
+              label: Text('Subscription'),
+            ),
+            DataColumn(
+              label: Text('Company'),
+            ),
+            DataColumn(
+              label: Text('From'),
+            ),
+            DataColumn(
+              label: Text(''),
+            ),
+          ],
+          rows: snapshot.data!.map((entry) => DataRow(
+            cells: [
+              DataCell(Text(entry.desc)),
+              DataCell(Text(entry.source)),
+              DataCell(Text(entry.date.toString())),
+              DataCell(IconButton(
+                icon: const Icon(Icons.cancel),
+                onPressed: () {
+                  setState(() {
+                    DatabaseHelper.instance.delete(entry.id);
+                  });
+                },
+              )),
             ]
-        ),
-      ],
+          )).toList(),
+        );
+      },
     );
   }
+}
+
+class DatabaseHelper {
+  DatabaseHelper._();
+  static final DatabaseHelper instance = DatabaseHelper._();
+
+  static Database? _database;
+  Future<Database> get database async => _database ??= await _initDatabase();
+
+  Future<Database> _initDatabase() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, 'entries.db');
+
+    return await openDatabase(path, version: 1, onCreate: _onCreate);
+  }
+
+  Future _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE entries(
+        id INTEGER PRIMARY KEY,
+        desc TEXT,
+        source TEXT,
+        date TEXT
+      )
+    ''');
+  }
+
+  Future<List<MyEntry>> getEntries() async {
+    Database db = await instance.database;
+    var records = await db.query('entries', orderBy: 'id');
+
+    List<MyEntry> entriesList = records.isNotEmpty
+        ? records.map((c) => MyEntry.fromMap(c)).toList()
+        : [];
+
+    return entriesList;
+  }
+
+  Future<int> add(MyEntry entry) async {
+    Database db = await instance.database;
+    return await db.insert('entries', entry.toMap());
+  }
+
+  Future<void> addSQL(MyEntry entry) async {
+    Database db = await instance.database;
+    String sqlStatement = '''
+      INSERT INTO entries  (desc,source,date)
+      VALUES ('${entry.desc}', '${entry.source}', '${entry.date});
+    ''';
+    await db.execute(sqlStatement);
+  }
+
+  Future<int> delete(int? id) async {
+    Database db = await instance.database;
+    return await db.delete('entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+
 }
 
