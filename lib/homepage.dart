@@ -98,9 +98,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 TextButton(
                   onPressed: () {
+                    Navigator.pop(context, 'OK');
                     setState(() async {
-                      Navigator.pop(context, 'OK');
                       await DatabaseHelper.instance.add(
+                        _selectedIndex,
                         MyEntry(
                           desc: _homeworkController.text,
                           source: _courseController.text,
@@ -151,20 +152,20 @@ class _HomeworksPageState extends State<HomeworksPage> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<MyEntry>>(
-      future: DatabaseHelper.instance.getEntries(),
+      future: DatabaseHelper.instance.getEntries(_selectedIndex),
       builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
       if (!snapshot.hasData) {
         return const Center(child: Text('Loading...'));
       }
       return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
         DataTable(
-          columnSpacing: 44.0,
+          columnSpacing: 12.0,
           columns: const [
             DataColumn(
               label: Text('Homework'),
             ),
             DataColumn(
-              label: Text('Course'),
+              label: Text('Course name'),
             ),
             DataColumn(
               label: Text('Due date'),
@@ -182,7 +183,7 @@ class _HomeworksPageState extends State<HomeworksPage> {
                 icon: const Icon(Icons.cancel),
                 onPressed: () {
                   setState(() {
-                    DatabaseHelper.instance.delete(entry.id);
+                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
                   });
                 },
               )),
@@ -205,14 +206,14 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<MyEntry>>(
-      future: DatabaseHelper.instance.getEntries(),
+      future: DatabaseHelper.instance.getEntries(_selectedIndex),
       builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
       if(!snapshot.hasData) {
-        return const Center(child: Text('Loading...'));
+        return const Center(child: Text('Couldn\'t load...'));
       }
       return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
         DataTable(
-          columnSpacing: 35.0,
+          columnSpacing: 26.0,
           columns: const [
             DataColumn(
               label: Text('Subscription'),
@@ -236,7 +237,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                 icon: const Icon(Icons.cancel),
                 onPressed: () {
                   setState(() {
-                    DatabaseHelper.instance.delete(entry.id);
+                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
                   });
                 },
               )),
@@ -264,43 +265,60 @@ class DatabaseHelper {
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE entries(
+      CREATE TABLE homeworks(
         id INTEGER PRIMARY KEY,
         desc TEXT,
         source TEXT,
         date TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE subscriptions(
+        id INTEGER PRIMARY KEY,
+        desc TEXT,
+        source TEXT,
+        date TEXT
+      );
+    ''');
   }
 
-  Future<List<MyEntry>> getEntries() async {
+  Future<List<MyEntry>> getEntries(int type) async {
     Database db = await instance.database;
-    var records = await db.query('entries', orderBy: 'id');
+    var entries = type == 0 ? await db.query('homeworks', orderBy: 'id')
+        : await db.query('subscriptions', orderBy: 'id');
 
-    List<MyEntry> entriesList = records.isNotEmpty
-        ? records.map((c) => MyEntry.fromMap(c)).toList()
+    List<MyEntry> entriesList = entries.isNotEmpty
+        ? entries.map((c) => MyEntry.fromMap(c)).toList()
         : [];
 
     return entriesList;
   }
 
-  Future<int> add(MyEntry entry) async {
+  Future<int> add(int type, MyEntry entry) async {
     Database db = await instance.database;
-    return await db.insert('entries', entry.toMap());
+    var entries = type == 0 ?  await db.insert('homeworks', entry.toMap())
+        : await db.insert('subscriptions', entry.toMap());
+    return entries;
   }
 
-  Future<void> addSQL(MyEntry entry) async {
+  Future<void> addSQL(int type, MyEntry entry) async {
     Database db = await instance.database;
-    String sqlStatement = '''
-      INSERT INTO entries  (desc,source,date)
-      VALUES ('${entry.desc}', '${entry.source}', '${entry.date});
+    String sqlStatementHomeworks = '''
+      INSERT INTO homeworks  (desc,source,date)
+      VALUES ('${entry.desc}', ${entry.source}', '${entry.date});
     ''';
-    await db.execute(sqlStatement);
+    String sqlStatementSubscriptions = '''
+      INSERT INTO subscriptions  (desc,source,date)
+      VALUES ('${entry.desc}', ${entry.source}', '${entry.date});
+    ''';
+    var statement = type == 0 ? sqlStatementHomeworks : sqlStatementSubscriptions;
+    await db.execute(statement);
   }
 
-  Future<int> delete(int? id) async {
+  Future<int> delete(int type, int? id) async {
     Database db = await instance.database;
-    return await db.delete('entries', where: 'id = ?', whereArgs: [id]);
+    String table = type == 0 ? 'homeworks' : 'subscriptions';
+    return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
 
