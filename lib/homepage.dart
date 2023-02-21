@@ -38,117 +38,129 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.amber,
         title: const Text(
-          'An App of Tables'
+            'An App of Tables'
         ),
       ),
       body: Column(
         children: [
           FutureBuilder<List<MyEntry>>(
-            future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
-            builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: Text('Loading...'));
-              }
-              return DataTable(
-                columnSpacing: _selectedIndex == 0 ?  13 : 22,
-                columns: [
-                  DataColumn(
-                    label: TextButton(
-                      child: Text(
-                        _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
-                        style: const TextStyle(color: Colors.black),
+              future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
+              builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: Text('Loading...'));
+                }
+                return DataTable(
+                  columnSpacing: _selectedIndex == 0 ?  13 : 22,
+                  columns: [
+                    DataColumn(
+                      label: TextButton(
+                        child: Text(
+                          _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if(_column.endsWith('desc')){
+                              _column = 'descr';
+                            }
+                            else{
+                              _column = 'descr desc';
+                            }
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          if(_column.endsWith('desc')){
-                            _column = 'descr';
-                          }
-                          else{
-                            _column = '$_column desc';
-                          }
-                        });
-                      },
                     ),
-                  ),
-                  DataColumn(
-                    label: TextButton(
-                      child: Text(
+                    DataColumn(
+                      label: TextButton(
+                        child: Text(
                           _selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1],
                           style: const TextStyle(color: Colors.black),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if(_column.endsWith('desc')){
+                              if(_selectedIndex==1){
+                                _column = 'source+1';
+                              } else {
+                                _column = 'source';
+                              }
+                              //_selectedIndex == 1 ? _column = 'source+1' : 'source';
+                              //doesnt work as intended when ternary. why?
+                            }
+                            else{
+                              if(_selectedIndex==1){
+                                _column = 'source+1 desc';
+                              } else {
+                                _column = 'source desc';
+                              }
+                              //_selectedIndex == 1 ? _column = 'source+1 desc' : '$_column desc';
+                              //doesnt work as intended when ternary. why?
+                            }
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          if(_column.endsWith('desc')){
-                            _selectedIndex == 1 ? _column = 'source+1' : 'source';
-                          }
-                          else{
-                            _selectedIndex == 1 ? _column = 'source+1 desc' : '$_column desc';
-                          }
-                        });
-                      },
                     ),
-                  ),
-                  DataColumn(
-                    label: TextButton(
-                      child: Text(
-                        _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
-                        style: const TextStyle(color: Colors.black),
+                    DataColumn(
+                      label: TextButton(
+                        child: Text(
+                          _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if(_column.endsWith('desc')){
+                              _column = 'date';
+                            }
+                            else{
+                              _column = 'date desc';
+                            }
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          if(_column.endsWith('desc')){
-                            _column = 'date';
-                          }
-                          else{
-                            _column = '$_column desc';
-                          }
-                        });
-                      },
                     ),
-                  ),
-                  const DataColumn(
-                    label: Text(''),
-                  ),
-                ],
-                rows: snapshot.data!.map((entry) => DataRow(
-                  cells: [
-                    DataCell(Text(entry.descr)),
-                    DataCell(Text(entry.source)),
-                    DataCell(Text(entry.date.toString())),
-                    DataCell(IconButton(
-                      icon: const Icon(Icons.cancel),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Are you sure you want to delete?'),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('No'),
-                                  onPressed: () {
-                                    Navigator.pop(context, 'Cancel');
-                                  },
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context, 'OK');
-                                    setState(() {
-                                      DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                                    });
-                                  },
-                                  child: const Text('Yes'),
-                                ),
-                              ],
+                    const DataColumn(
+                      label: Text(''),
+                    ),
+                  ],
+                  rows: snapshot.data!.map((entry) => DataRow(
+                      cells: [
+                        DataCell(Text(entry.descr)),
+                        DataCell(Text(entry.source)),
+                        DataCell(Text(entry.date.toString())),
+                        DataCell(IconButton(
+                          icon: const Icon(Icons.cancel),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Are you sure you want to delete?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: const Text('No'),
+                                      onPressed: () {
+                                        Navigator.pop(context, 'Cancel');
+                                      },
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context, 'OK');
+                                        setState(() {
+                                          DatabaseHelper.instance.delete(_selectedIndex, entry.id);
+                                        });
+                                      },
+                                      child: const Text('Yes'),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    )),
-                  ]
-                )).toList(),
-              );
-            }
+                        )),
+                      ]
+                  )).toList(),
+                );
+              }
           ),
           TextButton(
             child: const Text('SORT BY ADDED ORDER'),
@@ -181,17 +193,17 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     TextField(
-                      controller: _dateController,
+                        controller: _dateController,
                         decoration: InputDecoration(
                           icon: const Icon(Icons.calendar_today),
                           labelText: _labelThrees[_selectedIndex],
                         ),
                         onTap: () async {
                           DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
-                            lastDate: DateTime(2030)
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
+                              lastDate: DateTime(2030)
                           );
                           if(pickedDate != null ){
                             String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
@@ -202,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                         }
                     )
                   ]
-                ),
+              ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
@@ -332,4 +344,3 @@ class DatabaseHelper {
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 }
-
