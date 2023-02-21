@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mob_project/colors.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -36,21 +37,26 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: springGreen,
         title: const Text(
             'An App of Tables'
         ),
       ),
-      body: Column(
-        children: [
-          FutureBuilder<List<MyEntry>>(
+      body: Container(
+        child: Column(
+          children: [
+            FutureBuilder<List<MyEntry>>(
               future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
               builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(child: Text('Loading...'));
+                  return const Center(child: Text('No entries'));
                 }
                 return DataTable(
-                  columnSpacing: _selectedIndex == 0 ?  13 : 22,
+                  decoration: BoxDecoration(
+                    color: teaGreen,
+                    border: Border.all(width: 10,color: Colors.white,),
+                  ),
+                  columnSpacing: _selectedIndex == 0 ?  6 : 15,
                   columns: [
                     DataColumn(
                       label: TextButton(
@@ -123,54 +129,58 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                   rows: snapshot.data!.map((entry) => DataRow(
-                      cells: [
-                        DataCell(Text(entry.descr)),
-                        DataCell(Text(entry.source)),
-                        DataCell(Text(entry.date.toString())),
-                        DataCell(IconButton(
-                          icon: const Icon(Icons.cancel),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text('Are you sure you want to delete?'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: const Text('No'),
-                                      onPressed: () {
-                                        Navigator.pop(context, 'Cancel');
-                                      },
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context, 'OK');
-                                        setState(() {
-                                          DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                                        });
-                                      },
-                                      child: const Text('Yes'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        )),
-                      ]
+                    cells: [
+                      DataCell(Text(entry.descr)),
+                      DataCell(Text(entry.source)),
+                      DataCell(Text(entry.date.toString())),
+                      DataCell(IconButton(
+                        icon: const Icon(Icons.cancel),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Are you sure you want to delete?'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('No'),
+                                    onPressed: () {
+                                      Navigator.pop(context, 'Cancel');
+                                    },
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, 'OK');
+                                      setState(() {
+                                        DatabaseHelper.instance.delete(_selectedIndex, entry.id);
+                                      });
+                                    },
+                                    child: const Text('Yes'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      )),
+                    ]
                   )).toList(),
                 );
               }
-          ),
-          TextButton(
-            child: const Text('SORT BY ADDED ORDER'),
-            onPressed: () {
-              setState(() {
-                _column = 'id';
-              });
-            },
-          ),
-        ],
+            ),
+            TextButton(
+              child: const Text(
+                'SORT BY ADDED ORDER',
+                style: TextStyle(color: polyGreen),
+              ),
+              onPressed: () {
+                setState(() {
+                  _column = 'id';
+                });
+              },
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -179,41 +189,41 @@ class _HomePageState extends State<HomePage> {
             builder: (BuildContext context) => AlertDialog(
               title: const Text('Add new'),
               content: Column(
-                  children: <Widget>[
-                    TextField(
-                      controller: _homeworkController,
-                      decoration: InputDecoration(
-                          labelText: _labelOnes[_selectedIndex]
-                      ),
+                children: <Widget>[
+                  TextField(
+                    controller: _homeworkController,
+                    decoration: InputDecoration(
+                        labelText: _labelOnes[_selectedIndex]
                     ),
-                    TextField(
-                      controller: _courseController,
-                      decoration: InputDecoration(
-                          labelText: _labelTwos[_selectedIndex]
-                      ),
+                  ),
+                  TextField(
+                    controller: _courseController,
+                    decoration: InputDecoration(
+                        labelText: _labelTwos[_selectedIndex]
                     ),
-                    TextField(
-                        controller: _dateController,
-                        decoration: InputDecoration(
-                          icon: const Icon(Icons.calendar_today),
-                          labelText: _labelThrees[_selectedIndex],
-                        ),
-                        onTap: () async {
-                          DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
-                              lastDate: DateTime(2030)
-                          );
-                          if(pickedDate != null ){
-                            String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-                            setState(() {
-                              _dateController.text = formattedDate;
-                            });
-                          }
+                  ),
+                  TextField(
+                      controller: _dateController,
+                      decoration: InputDecoration(
+                        icon: const Icon(Icons.calendar_today),
+                        labelText: _labelThrees[_selectedIndex],
+                      ),
+                      onTap: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
+                            lastDate: DateTime(2030)
+                        );
+                        if(pickedDate != null ){
+                          String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+                          setState(() {
+                            _dateController.text = formattedDate;
+                          });
                         }
-                    )
-                  ]
+                      }
+                  )
+                ]
               ),
               actions: <Widget>[
                 TextButton(
@@ -250,18 +260,24 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         },
-        backgroundColor: Colors.green,
+        backgroundColor: yellowGreen,
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: springGreen,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.my_library_books ),
+            icon: Icon(
+              Icons.my_library_books,
+              color: yellowGreen,
+            ),
             label: 'Homeworks',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.currency_exchange),
+            icon: Icon(
+              Icons.currency_exchange,
+              color: yellowGreen,
+            ),
             label: 'Subscriptions',
           ),
         ],
@@ -343,4 +359,16 @@ class DatabaseHelper {
     String table = type == 0 ? 'homeworks' : 'subscriptions';
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
+
+  // Future<String> getSum() async {
+  //   Database db = await instance.database;
+  //   var getCostSum = await db.rawQuery(
+  //       'SELECT SUM(source) FROM subscriptions');
+  //   // String getCostSum = '''
+  //   //   SELECT SUM(source)
+  //   //   FROM subscriptions
+  //   // ''';
+  //   print(getCostSum);
+  //   return getCostSum.toString();
+  // }
 }
