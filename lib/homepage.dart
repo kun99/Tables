@@ -79,17 +79,16 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () {
                         setState(() {
                           if(_column.endsWith('desc')){
-                            _column = 'source';
+                            _selectedIndex == 1 ? _column = 'source+1' : 'source';
                           }
                           else{
-                            _column = '$_column desc';
+                            _selectedIndex == 1 ? _column = 'source+1 desc' : '$_column desc';
                           }
                         });
                       },
                     ),
                   ),
                   DataColumn(
-                    //label: Text(_selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1]),
                     label: TextButton(
                       child: Text(
                         _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
