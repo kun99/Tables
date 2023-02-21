@@ -13,17 +13,18 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-final _homeworkController = TextEditingController();
-final _courseController = TextEditingController();
-final _dateController = TextEditingController();
-
-List<String> _labelOnes = ['Homework', 'Subscription'];
-List<String> _labelTwos = ['Course name',  'Cost'];
-List<String> _labelThrees = ['Due date', 'Starting'];
-
-int _selectedIndex = 0;
-
 class _HomePageState extends State<HomePage> {
+
+  final _homeworkController = TextEditingController();
+  final _courseController = TextEditingController();
+  final _dateController = TextEditingController();
+
+  final List<String> _labelOnes = ['Homework', 'Subscription'];
+  final List<String> _labelTwos = ['Course name',  'Cost'];
+  final List<String> _labelThrees = ['Due date', 'Starting'];
+
+  int _selectedIndex = 0;
+  String _column = "id";
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,68 +41,125 @@ class _HomePageState extends State<HomePage> {
           'An App of Tables'
         ),
       ),
-      body: FutureBuilder<List<MyEntry>>(
-        future: DatabaseHelper.instance.getEntries(_selectedIndex),
-        builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: Text('Loading...'));
-          }
-          return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
-            DataTable(
-              columnSpacing: _selectedIndex == 0 ? 23 : 37,
-              columns: [
-                DataColumn(
-                  label: Text(_selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1]),
-                ),
-                DataColumn(
-                  label: Text(_selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1]),
-                ),
-                DataColumn(
-                  label: Text(_selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1]),
-                ),
-                const DataColumn(
-                  label: Text(''),
-                ),
-              ],
-              rows: snapshot.data!.map((entry) => DataRow(
-                cells: [
-                  DataCell(Text(entry.desc)),
-                  DataCell(Text(entry.source)),
-                  DataCell(Text(entry.date.toString())),
-                  DataCell(IconButton(
-                    icon: const Icon(Icons.cancel),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Are you sure you want to delete?'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('No'),
-                                onPressed: () {
-                                  Navigator.pop(context, 'Cancel');
-                                },
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context, 'OK');
-                                  setState(() {
-                                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                                  });
-                                },
-                                child: const Text('Yes'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  )),
-                ]
-              )).toList(),
-            );
-        }
+      body: Column(
+        children: [
+          FutureBuilder<List<MyEntry>>(
+            future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
+            builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: Text('Loading...'));
+              }
+              return DataTable(
+                columnSpacing: _selectedIndex == 0 ?  13 : 22,
+                columns: [
+                  DataColumn(
+                    label: TextButton(
+                      child: Text(
+                        _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            _column = 'descr';
+                          }
+                          else{
+                            _column = '$_column desc';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  DataColumn(
+                    label: TextButton(
+                      child: Text(
+                          _selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1],
+                          style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            _column = 'source';
+                          }
+                          else{
+                            _column = '$_column desc';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  DataColumn(
+                    //label: Text(_selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1]),
+                    label: TextButton(
+                      child: Text(
+                        _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            _column = 'date';
+                          }
+                          else{
+                            _column = '$_column desc';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  const DataColumn(
+                    label: Text(''),
+                  ),
+                ],
+                rows: snapshot.data!.map((entry) => DataRow(
+                  cells: [
+                    DataCell(Text(entry.descr)),
+                    DataCell(Text(entry.source)),
+                    DataCell(Text(entry.date.toString())),
+                    DataCell(IconButton(
+                      icon: const Icon(Icons.cancel),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Are you sure you want to delete?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('No'),
+                                  onPressed: () {
+                                    Navigator.pop(context, 'Cancel');
+                                  },
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context, 'OK');
+                                    setState(() {
+                                      DatabaseHelper.instance.delete(_selectedIndex, entry.id);
+                                    });
+                                  },
+                                  child: const Text('Yes'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    )),
+                  ]
+                )).toList(),
+              );
+            }
+          ),
+          TextButton(
+            child: const Text('SORT BY ADDED ORDER'),
+            onPressed: () {
+              setState(() {
+                _column = 'id';
+              });
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -133,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                           DateTime? pickedDate = await showDatePicker(
                             context: context,
                             initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
+                            firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
                             lastDate: DateTime(2030)
                           );
                           if(pickedDate != null ){
@@ -148,7 +206,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'Cancel'),
+                  onPressed: () {
+                    Navigator.pop(context, 'Cancel');
+                    setState(()  {
+                      _homeworkController.clear();
+                      _courseController.clear();
+                      _dateController.clear();
+                    });
+                  },
                   child: const Text('Cancel'),
                 ),
                 TextButton(
@@ -157,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                     await DatabaseHelper.instance.add(
                       _selectedIndex,
                       MyEntry(
-                        desc: _homeworkController.text,
+                        descr: _homeworkController.text,
                         source: _courseController.text,
                         date: _dateController.text,
                       ),
@@ -214,7 +279,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE homeworks(
         id INTEGER PRIMARY KEY,
-        desc TEXT,
+        descr TEXT,
         source TEXT,
         date TEXT
       )
@@ -222,17 +287,17 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE subscriptions(
         id INTEGER PRIMARY KEY,
-        desc TEXT,
+        descr TEXT,
         source TEXT,
         date TEXT
       );
     ''');
   }
 
-  Future<List<MyEntry>> getEntries(int type) async {
+  Future<List<MyEntry>> getEntries(int type, String column) async {
     Database db = await instance.database;
-    var entries = type == 0 ? await db.query('homeworks', orderBy: 'id')
-        : await db.query('subscriptions', orderBy: 'id');
+    var entries = type == 0 ? await db.query('homeworks', orderBy: column)
+        : await db.query('subscriptions', orderBy: column);
 
     List<MyEntry> entriesList = entries.isNotEmpty
         ? entries.map((c) => MyEntry.fromMap(c)).toList()
@@ -251,12 +316,12 @@ class DatabaseHelper {
   Future<void> addSQL(int type, MyEntry entry) async {
     Database db = await instance.database;
     String sqlStatementHomeworks = '''
-      INSERT INTO homeworks  (desc,source,date)
-      VALUES ('${entry.desc}', ${entry.source}', '${entry.date});
+      INSERT INTO homeworks  (descr,source,date)
+      VALUES ('${entry.descr}', ${entry.source}', '${entry.date});
     ''';
     String sqlStatementSubscriptions = '''
-      INSERT INTO subscriptions  (desc,source,date)
-      VALUES ('${entry.desc}', ${entry.source}', '${entry.date});
+      INSERT INTO subscriptions  (descr,source,date)
+      VALUES ('${entry.descr}', ${entry.source}', '${entry.date});
     ''';
     var statement = type == 0 ? sqlStatementHomeworks : sqlStatementSubscriptions;
     await db.execute(statement);
@@ -267,7 +332,5 @@ class DatabaseHelper {
     String table = type == 0 ? 'homeworks' : 'subscriptions';
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
-
-
 }
 

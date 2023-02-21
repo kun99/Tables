@@ -2,17 +2,17 @@ class MyEntry {
 
   // instance variables
   int? id;
-  String desc;
+  String descr;
   String source;
   String date;
 
   // constructor
-  MyEntry({this.id, required this.desc, required this.source, required this.date});
+  MyEntry({this.id, required this.descr, required this.source, required this.date});
 
   // factory function (will create the object for us)
   factory MyEntry.fromMap(Map<String, dynamic> json) => MyEntry(
     id: json['id'],
-    desc: json['desc'],
+    descr: json['descr'],
     source: json['source'],
     date: json['date'],
   );
@@ -21,7 +21,7 @@ class MyEntry {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'desc': desc,
+      'descr': descr,
       'source': source,
       'date': date,
     };
