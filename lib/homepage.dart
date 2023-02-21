@@ -21,11 +21,6 @@ List<String> _labelOnes = ['Homework', 'Subscription'];
 List<String> _labelTwos = ['Course name',  'Cost'];
 List<String> _labelThrees = ['Due date', 'Starting'];
 
-List<Widget> _tablePages = <Widget> [
-  const HomeworksPage(),
-  const SubscriptionsPage(),
-];
-
 int _selectedIndex = 0;
 
 class _HomePageState extends State<HomePage> {
@@ -45,8 +40,68 @@ class _HomePageState extends State<HomePage> {
           'An App of Tables'
         ),
       ),
-      body: Container(
-        child: _tablePages.elementAt(_selectedIndex),
+      body: FutureBuilder<List<MyEntry>>(
+        future: DatabaseHelper.instance.getEntries(_selectedIndex),
+        builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: Text('Loading...'));
+          }
+          return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
+            DataTable(
+              columnSpacing: _selectedIndex == 0 ? 23 : 37,
+              columns: [
+                DataColumn(
+                  label: Text(_selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1]),
+                ),
+                DataColumn(
+                  label: Text(_selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1]),
+                ),
+                DataColumn(
+                  label: Text(_selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1]),
+                ),
+                const DataColumn(
+                  label: Text(''),
+                ),
+              ],
+              rows: snapshot.data!.map((entry) => DataRow(
+                cells: [
+                  DataCell(Text(entry.desc)),
+                  DataCell(Text(entry.source)),
+                  DataCell(Text(entry.date.toString())),
+                  DataCell(IconButton(
+                    icon: const Icon(Icons.cancel),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Are you sure you want to delete?'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('No'),
+                                onPressed: () {
+                                  Navigator.pop(context, 'Cancel');
+                                },
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, 'OK');
+                                  setState(() {
+                                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
+                                  });
+                                },
+                                child: const Text('Yes'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  )),
+                ]
+              )).toList(),
+            );
+        }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -97,17 +152,17 @@ class _HomePageState extends State<HomePage> {
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context, 'OK');
-                    setState(() async {
-                      await DatabaseHelper.instance.add(
-                        _selectedIndex,
-                        MyEntry(
-                          desc: _homeworkController.text,
-                          source: _courseController.text,
-                          date: _dateController.text,
-                        ),
-                      );
+                    await DatabaseHelper.instance.add(
+                      _selectedIndex,
+                      MyEntry(
+                        desc: _homeworkController.text,
+                        source: _courseController.text,
+                        date: _dateController.text,
+                      ),
+                    );
+                    setState(()  {
                       _homeworkController.clear();
                       _courseController.clear();
                       _dateController.clear();
@@ -137,114 +192,6 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
-    );
-  }
-}
-
-class HomeworksPage extends StatefulWidget {
-  const HomeworksPage({Key? key}) : super(key: key);
-
-  @override
-  State<HomeworksPage> createState() => _HomeworksPageState();
-}
-
-class _HomeworksPageState extends State<HomeworksPage> {
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<MyEntry>>(
-      future: DatabaseHelper.instance.getEntries(_selectedIndex),
-      builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
-      if (!snapshot.hasData) {
-        return const Center(child: Text('Loading...'));
-      }
-      return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
-        DataTable(
-          columnSpacing: 12.0,
-          columns: const [
-            DataColumn(
-              label: Text('Homework'),
-            ),
-            DataColumn(
-              label: Text('Course name'),
-            ),
-            DataColumn(
-              label: Text('Due date'),
-            ),
-            DataColumn(
-              label: Text(''),
-            ),
-          ],
-          rows: snapshot.data!.map((entry) => DataRow(
-            cells: [
-              DataCell(Text(entry.desc)),
-              DataCell(Text(entry.source)),
-              DataCell(Text(entry.date.toString())),
-              DataCell(IconButton(
-                icon: const Icon(Icons.cancel),
-                onPressed: () {
-                  setState(() {
-                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                  });
-                },
-              )),
-            ]
-          )).toList(),
-        );
-      }
-    );
-  }
-}
-
-class SubscriptionsPage extends StatefulWidget {
-  const SubscriptionsPage({Key? key}) : super(key: key);
-
-  @override
-  State<SubscriptionsPage> createState() => _SubscriptionsPageState();
-}
-
-class _SubscriptionsPageState extends State<SubscriptionsPage> {
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<MyEntry>>(
-      future: DatabaseHelper.instance.getEntries(_selectedIndex),
-      builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
-      if(!snapshot.hasData) {
-        return const Center(child: Text('Couldn\'t load...'));
-      }
-      return //snapshot.data!.isEmpty ? const Center(child: Text('No entries in list')):
-        DataTable(
-          columnSpacing: 26.0,
-          columns: const [
-            DataColumn(
-              label: Text('Subscription'),
-            ),
-            DataColumn(
-              label: Text('Company'),
-            ),
-            DataColumn(
-              label: Text('From'),
-            ),
-            DataColumn(
-              label: Text(''),
-            ),
-          ],
-          rows: snapshot.data!.map((entry) => DataRow(
-            cells: [
-              DataCell(Text(entry.desc)),
-              DataCell(Text(entry.source)),
-              DataCell(Text(entry.date.toString())),
-              DataCell(IconButton(
-                icon: const Icon(Icons.cancel),
-                onPressed: () {
-                  setState(() {
-                    DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                  });
-                },
-              )),
-            ]
-          )).toList(),
-        );
-      },
     );
   }
 }
