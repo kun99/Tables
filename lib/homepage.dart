@@ -42,145 +42,174 @@ class _HomePageState extends State<HomePage> {
             'An App of Tables'
         ),
       ),
-      body: Container(
-        child: Column(
-          children: [
-            FutureBuilder<List<MyEntry>>(
-              future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
-              builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: Text('No entries'));
-                }
-                return DataTable(
-                  decoration: BoxDecoration(
-                    color: teaGreen,
-                    border: Border.all(width: 10,color: Colors.white,),
-                  ),
-                  columnSpacing: _selectedIndex == 0 ?  6 : 15,
-                  columns: [
-                    DataColumn(
-                      label: TextButton(
-                        child: Text(
-                          _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if(_column.endsWith('desc')){
-                              _column = 'descr';
-                            }
-                            else{
-                              _column = 'descr desc';
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    DataColumn(
-                      label: TextButton(
-                        child: Text(
-                          _selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1],
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if(_column.endsWith('desc')){
-                              if(_selectedIndex==1){
-                                _column = 'source+1';
-                              } else {
-                                _column = 'source';
-                              }
-                              //_selectedIndex == 1 ? _column = 'source+1' : 'source';
-                              //doesnt work as intended when ternary. why?
-                            }
-                            else{
-                              if(_selectedIndex==1){
-                                _column = 'source+1 desc';
-                              } else {
-                                _column = 'source desc';
-                              }
-                              //_selectedIndex == 1 ? _column = 'source+1 desc' : '$_column desc';
-                              //doesnt work as intended when ternary. why?
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    DataColumn(
-                      label: TextButton(
-                        child: Text(
-                          _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            if(_column.endsWith('desc')){
-                              _column = 'date';
-                            }
-                            else{
-                              _column = 'date desc';
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                    const DataColumn(
-                      label: Text(''),
-                    ),
-                  ],
-                  rows: snapshot.data!.map((entry) => DataRow(
-                    cells: [
-                      DataCell(Text(entry.descr)),
-                      DataCell(Text(entry.source)),
-                      DataCell(Text(entry.date.toString())),
-                      DataCell(IconButton(
-                        icon: const Icon(Icons.cancel),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Are you sure you want to delete?'),
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: const Text('No'),
-                                    onPressed: () {
-                                      Navigator.pop(context, 'Cancel');
-                                    },
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context, 'OK');
-                                      setState(() {
-                                        DatabaseHelper.instance.delete(_selectedIndex, entry.id);
-                                      });
-                                    },
-                                    child: const Text('Yes'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      )),
-                    ]
-                  )).toList(),
-                );
+      body: ListView(
+        children: [
+          FutureBuilder<List<MyEntry>>(
+            future: DatabaseHelper.instance.getEntries(_selectedIndex, _column),
+            builder: (BuildContext context, AsyncSnapshot<List<MyEntry>> snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: Text('No entries'));
               }
+              return DataTable(
+                decoration: BoxDecoration(
+                  color: teaGreen,
+                  border: Border.all(width: 10,color: Colors.white,),
+                ),
+                columnSpacing: _selectedIndex == 0 ?  6 : 15,
+                columns: [
+                  DataColumn(
+                    label: TextButton(
+                      child: Text(
+                        _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            _column = 'descr';
+                          }
+                          else{
+                            _column = 'descr desc';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  DataColumn(
+                    label: TextButton(
+                      child: Text(
+                        _selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1],
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            if(_selectedIndex==1){
+                              _column = 'source+1';
+                            } else {
+                              _column = 'source';
+                            }
+                            //_selectedIndex == 1 ? _column = 'source+1' : 'source';
+                            //doesnt work as intended when ternary. why?
+                          }
+                          else{
+                            if(_selectedIndex==1){
+                              _column = 'source+1 desc';
+                            } else {
+                              _column = 'source desc';
+                            }
+                            //_selectedIndex == 1 ? _column = 'source+1 desc' : '$_column desc';
+                            //doesnt work as intended when ternary. why?
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  DataColumn(
+                    label: TextButton(
+                      child: Text(
+                        _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if(_column.endsWith('desc')){
+                            _column = 'date';
+                          }
+                          else{
+                            _column = 'date desc';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  const DataColumn(
+                    label: Text(''),
+                  ),
+                ],
+                rows: snapshot.data!.map((entry) => DataRow(
+                  cells: [
+                    DataCell(
+                      Center(
+                        child: Text(entry.descr),
+                      ),
+                      //onLongPress
+                    ),
+                    DataCell(
+                      Center(
+                        child: Text(entry.source, textAlign: TextAlign.center),
+                      )
+                    ),
+                    DataCell(
+                      Center(
+                        child: Text(entry.date.toString())
+                      ),
+                    ),
+                    DataCell(
+                      Center(
+                        child: IconButton(
+                          icon: const Icon(Icons.cancel),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Are you sure you want to delete?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: const Text('No'),
+                                      onPressed: () {
+                                        Navigator.pop(context, 'Cancel');
+                                      },
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context, 'OK');
+                                        setState(() {
+                                          DatabaseHelper.instance.delete(_selectedIndex, entry.id);
+                                        });
+                                      },
+                                      child: const Text('Yes'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      )
+                    ),
+                  ]
+                )).toList(),
+              );
+            }
+          ),
+          if(_selectedIndex == 1) FutureBuilder<Object?>(
+              future: DatabaseHelper.instance.getSum(),
+              builder: (BuildContext context, AsyncSnapshot<Object?> snapshot) {
+                if (snapshot.hasData) {
+                  return Center(
+                    child: Text('Subscription Total: ${snapshot.data!}'),
+                  );
+                } else{
+                  return const Center(
+                    child: Text(''),
+                  );
+                }
+              }
+          ),
+          TextButton(
+            child: const Text(
+              'SORT BY ADDED ORDER',
+              style: TextStyle(color: polyGreen),
             ),
-            TextButton(
-              child: const Text(
-                'SORT BY ADDED ORDER',
-                style: TextStyle(color: polyGreen),
-              ),
-              onPressed: () {
-                setState(() {
-                  _column = 'id';
-                });
-              },
-            ),
-          ],
-        ),
+            onPressed: () {
+              setState(() {
+                _column = 'id';
+              });
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -288,6 +317,29 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class NotePad extends StatefulWidget {
+  const NotePad({Key? key}) : super(key: key);
+
+  @override
+  State<NotePad> createState() => _NotePadState();
+}
+
+class _NotePadState extends State<NotePad> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(8),
+      children: <Widget>[
+        Container(
+          height: 50,
+          color: Colors.amber[600],
+          child: const Center(child: Text('Entry A')),
+        ),
+      ],
+    );
+  }
+}
+
 class DatabaseHelper {
   DatabaseHelper._();
   static final DatabaseHelper instance = DatabaseHelper._();
@@ -340,35 +392,23 @@ class DatabaseHelper {
     return entries;
   }
 
-  Future<void> addSQL(int type, MyEntry entry) async {
-    Database db = await instance.database;
-    String sqlStatementHomeworks = '''
-      INSERT INTO homeworks  (descr,source,date)
-      VALUES ('${entry.descr}', ${entry.source}', '${entry.date});
-    ''';
-    String sqlStatementSubscriptions = '''
-      INSERT INTO subscriptions  (descr,source,date)
-      VALUES ('${entry.descr}', ${entry.source}', '${entry.date});
-    ''';
-    var statement = type == 0 ? sqlStatementHomeworks : sqlStatementSubscriptions;
-    await db.execute(statement);
-  }
-
   Future<int> delete(int type, int? id) async {
     Database db = await instance.database;
     String table = type == 0 ? 'homeworks' : 'subscriptions';
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
-  // Future<String> getSum() async {
-  //   Database db = await instance.database;
-  //   var getCostSum = await db.rawQuery(
-  //       'SELECT SUM(source) FROM subscriptions');
-  //   // String getCostSum = '''
-  //   //   SELECT SUM(source)
-  //   //   FROM subscriptions
-  //   // ''';
-  //   print(getCostSum);
-  //   return getCostSum.toString();
-  // }
+  Future<Object?> getSum() async {
+    Database db = await instance.database;
+    Object? sum = '';
+    var getCostSum = await db.rawQuery(
+        'SELECT SUM(source) FROM subscriptions');
+    //just iterating through as i know there is only one key and val in the map
+    for (var element in getCostSum) {
+      for (var v in element.values){
+        sum = v;
+      }
+    }
+    return sum;
+  }
 }
