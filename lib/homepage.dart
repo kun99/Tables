@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
 import 'my_entry.dart';
+import 'note.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,6 +20,8 @@ class _HomePageState extends State<HomePage> {
   final _homeworkController = TextEditingController();
   final _courseController = TextEditingController();
   final _dateController = TextEditingController();
+  final _noteHWController = TextEditingController();
+  final _noteSController = TextEditingController();
 
   final List<String> _labelOnes = ['Homework', 'Subscription'];
   final List<String> _labelTwos = ['Course name',  'Cost'];
@@ -35,6 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    FocusManager.instance.primaryFocus?.unfocus();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: springGreen,
@@ -142,8 +146,55 @@ class _HomePageState extends State<HomePage> {
                     ),
                     DataCell(
                       Center(
-                        child: Text(entry.date.toString())
+                        child: Text(entry.date.toString()),
                       ),
+                      onTap: () {
+                        showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                            title: const Text('Edit date'),
+                            content: TextField(
+                                controller: _dateController,
+                                decoration: InputDecoration(
+                                  icon: const Icon(Icons.calendar_today),
+                                  labelText: _labelThrees[_selectedIndex],
+                                ),
+                              onTap: () async {
+                                DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: _selectedIndex == 0 ? DateTime.now() : DateTime(2020),
+                                    lastDate: DateTime(2030)
+                                );
+                                if (pickedDate != null) {
+                                  String formattedDate = DateFormat('yyyy-MM-dd')
+                                      .format(pickedDate);
+                                  setState(() {
+                                    _dateController.text = formattedDate;
+                                  });
+                                }
+                              },
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, 'Cancel');
+                                },
+                                child: const Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, 'OK');
+                                  setState(() {
+                                    DatabaseHelper.instance.update(_selectedIndex, entry);
+                                  });
+                                },
+                                child: const Text('Yes'),
+                              ),
+                            ],
+                          )
+                        );
+                      }
                     ),
                     DataCell(
                       Center(
@@ -208,6 +259,67 @@ class _HomePageState extends State<HomePage> {
                 _column = 'id';
               });
             },
+          ),
+          const SizedBox(height: 5.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: FutureBuilder<Object?>(
+              future: DatabaseHelper.instance.getNote(_selectedIndex),
+              builder: (BuildContext context, AsyncSnapshot<Object?> snapshot) {
+                return Column(
+                  children: [
+                    TextFormField(
+                      controller: _selectedIndex == 0 ? _noteHWController : _noteSController,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 10),
+                        hintText: snapshot.hasData ? snapshot.data.toString() : 'No note',
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: polyGreen),
+                        ),
+                      ),
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        TextEditingController selectedNote = _selectedIndex == 0 ? _noteHWController : _noteSController;
+                        if(selectedNote.text.isEmpty){
+                          selectedNote.text = ' ';
+                        }
+                        await DatabaseHelper.instance.editNote(
+                          _selectedIndex,
+                          Note(
+                            type: _selectedIndex,
+                            note: selectedNote.text,
+                          ),
+                        );
+                        setState(() {
+                          String text = selectedNote.text;
+                          if(selectedNote.text.isNotEmpty){
+                            selectedNote.clear();
+                          }
+                          selectedNote.value = selectedNote.value.copyWith(
+                            text: text,
+                            selection: TextSelection.collapsed(offset: text.length),
+                          );
+                        });
+                      },
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          color: polyGreen,
+                          fontSize: 14.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            )
           ),
         ],
       ),
@@ -317,29 +429,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class NotePad extends StatefulWidget {
-  const NotePad({Key? key}) : super(key: key);
-
-  @override
-  State<NotePad> createState() => _NotePadState();
-}
-
-class _NotePadState extends State<NotePad> {
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(8),
-      children: <Widget>[
-        Container(
-          height: 50,
-          color: Colors.amber[600],
-          child: const Center(child: Text('Entry A')),
-        ),
-      ],
-    );
-  }
-}
-
 class DatabaseHelper {
   DatabaseHelper._();
   static final DatabaseHelper instance = DatabaseHelper._();
@@ -371,6 +460,27 @@ class DatabaseHelper {
         date TEXT
       );
     ''');
+    await db.execute('''
+      CREATE TABLE notes(
+        id INTEGER PRIMARY KEY,
+        type INTEGER,
+        note BLOB
+      );
+    ''');
+    await db.execute('''
+      INSERT INTO notes (type, note)
+      VALUES (0, 
+        'HW Note 
+        \n Tap on columns on the first row to sort
+        \n long press on date to change date');
+    ''');
+    await db.execute('''
+      INSERT INTO notes (type, note)
+      VALUES (1, 
+        'Subs Note
+        \n Tap on columns on the first row to sort
+        \n long press on date to change date');
+    ''');
   }
 
   Future<List<MyEntry>> getEntries(int type, String column) async {
@@ -385,11 +495,38 @@ class DatabaseHelper {
     return entriesList;
   }
 
+  Future<Object?> getNote(int type) async {
+    Database db = await instance.database;
+    Object? retrievedNote = '';
+    var getCostSum = await db.rawQuery(
+        'SELECT note FROM notes WHERE type=$type');
+    //just iterating through as i know there is only one unique note for that type
+    for (var element in getCostSum) {
+      for (var v in element.values){
+        retrievedNote = v;
+      }
+    }
+    return retrievedNote;
+  }
+
   Future<int> add(int type, MyEntry entry) async {
     Database db = await instance.database;
     var entries = type == 0 ?  await db.insert('homeworks', entry.toMap())
         : await db.insert('subscriptions', entry.toMap());
     return entries;
+  }
+
+  Future<int> editNote(int type, Note note) async {
+    Database db = await instance.database;
+    db.delete('note', where: 'type = ?', whereArgs: [type]);
+    var addedNote = await db.insert('notes', note.toMap());
+    return addedNote;
+  }
+
+  Future<int> update(int type, MyEntry entry) async {
+    Database db = await instance.database;
+    String table = type == 0 ? 'homeworks' : 'subscriptions';
+    return await db.update(table, entry.toMap(), where: 'id = ?', whereArgs: [entry.id]);
   }
 
   Future<int> delete(int type, int? id) async {
