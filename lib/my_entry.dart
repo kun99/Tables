@@ -1,3 +1,5 @@
+//using one class to init both the homework and subscriptions tables
+
 class MyEntry {
 
   // instance variables
