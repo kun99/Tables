@@ -186,7 +186,9 @@ class _HomePageState extends State<HomePage> {
                                 onPressed: () {
                                   Navigator.pop(context, 'OK');
                                   setState(() {
+                                    entry.date = _dateController.text;
                                     DatabaseHelper.instance.update(_selectedIndex, entry);
+                                    _dateController.clear();
                                   });
                                 },
                                 child: const Text('Yes'),
@@ -472,14 +474,14 @@ class DatabaseHelper {
       VALUES (0, 
         'HW Note 
         \n Tap on columns on the first row to sort
-        \n long press on date to change date');
+        \n Tap on date to change date');
     ''');
     await db.execute('''
       INSERT INTO notes (type, note)
       VALUES (1, 
         'Subs Note
         \n Tap on columns on the first row to sort
-        \n long press on date to change date');
+        \n Tap on date to change date');
     ''');
   }
 
