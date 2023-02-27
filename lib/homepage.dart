@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 columnSpacing: _selectedIndex == 0 ?  6 : 15,
                 columns: [
-                  DataColumn(
+                  DataColumn(             //column for Homework/Subscription
                     label: TextButton(
                       child: Text(
                         _selectedIndex == 0 ? _labelOnes[0] : _labelOnes[1],
@@ -80,7 +80,7 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  DataColumn(
+                  DataColumn(             //column for course name/cost
                     label: TextButton(
                       child: Text(
                         _selectedIndex == 0 ? _labelTwos[0] : _labelTwos[1],
@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  DataColumn(
+                  DataColumn(             //column for date
                     label: TextButton(
                       child: Text(
                         _selectedIndex == 0 ? _labelThrees[0] : _labelThrees[1],
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  const DataColumn(
+                  const DataColumn(             //column for delete button
                     label: Text(''),
                   ),
                 ],
@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
                       Center(
                         child: Text(entry.date.toString()),
                       ),
-                      onTap: () {
+                      onTap: () { //Option to edit date
                         showDialog<String>(
                           context: context,
                           builder: (BuildContext context) => AlertDialog(
@@ -203,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                       }
                     ),
                     DataCell(
-                      Center(
+                      Center(             //Delete button
                         child: IconButton(
                           icon: const Icon(Icons.cancel),
                           onPressed: () {
@@ -241,7 +241,7 @@ class _HomePageState extends State<HomePage> {
               );
             }
           ),
-          //to display total cost of subs
+          //to display total cost of subs - only displayed when index=1 (Subs page)
           if(_selectedIndex == 1) FutureBuilder<Object?>(
               future: DatabaseHelper.instance.getSum(),
               builder: (BuildContext context, AsyncSnapshot<Object?> snapshot) {
@@ -278,6 +278,7 @@ class _HomePageState extends State<HomePage> {
                 return Column(
                   children: [
                     TextFormField(
+                      //setting controller to take in and display note depending on index
                       controller: _selectedIndex == 0 ? _noteHWController : _noteSController,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
@@ -294,6 +295,7 @@ class _HomePageState extends State<HomePage> {
                       maxLines: null,
                     ),
                     TextButton(
+                      //saving note depending on index
                       onPressed: () async {
                         TextEditingController selectedNote = _selectedIndex == 0 ? _noteHWController : _noteSController;
                         if(selectedNote.text.isEmpty){
@@ -332,6 +334,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+      //just a floating button to add new entries
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog<String>(
@@ -413,6 +416,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: yellowGreen,
         child: const Icon(Icons.add),
       ),
+      //bottom nav bar to switch between different pages
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: springGreen,
         items: const <BottomNavigationBarItem>[

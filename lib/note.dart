@@ -1,9 +1,11 @@
 class Note {
 
+  // instance variables
   int? id;
   int type;
   String note;
 
+  //constructor
   Note({this.id, required this.type, required this.note});
 
   factory Note.fromMap(Map<String, dynamic> json) => Note(

@@ -19,6 +19,8 @@ class DatabaseHelper {
     return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
+  //didn't really know how to format all the commands together
+  //creating all tables and adding preset notes to notes table on app init
   Future _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE homeworks(
@@ -59,6 +61,7 @@ class DatabaseHelper {
     ''');
   }
 
+  //returns entries from homeworks/subs entries
   Future<List<MyEntry>> getEntries(int type, String column) async {
     Database db = await instance.database;
     var entries = type == 0 ? await db.query('homeworks', orderBy: column)
@@ -71,6 +74,7 @@ class DatabaseHelper {
     return entriesList;
   }
 
+  //returns note depending on page index of app
   Future<Object?> getNote(int type) async {
     Database db = await instance.database;
     Object? retrievedNote = '';
@@ -85,6 +89,7 @@ class DatabaseHelper {
     return retrievedNote;
   }
 
+  //adds new entry into either hw or subs table
   Future<int> add(int type, MyEntry entry) async {
     Database db = await instance.database;
     var entries = type == 0 ?  await db.insert('homeworks', entry.toMap())
@@ -92,6 +97,9 @@ class DatabaseHelper {
     return entries;
   }
 
+  //editing note - simply deleting preexisting note and adding a new one
+  //so the notes table will always only have 2 entries
+  //one note for hw and one note for subs
   Future<int> editNote(int type, Note note) async {
     Database db = await instance.database;
     db.delete('note', where: 'type = ?', whereArgs: [type]);
@@ -99,18 +107,21 @@ class DatabaseHelper {
     return addedNote;
   }
 
+  //updating date of hw/subs entry
   Future<int> update(int type, MyEntry entry) async {
     Database db = await instance.database;
     String table = type == 0 ? 'homeworks' : 'subscriptions';
     return await db.update(table, entry.toMap(), where: 'id = ?', whereArgs: [entry.id]);
   }
 
+  //deleting entry from table
   Future<int> delete(int type, int? id) async {
     Database db = await instance.database;
     String table = type == 0 ? 'homeworks' : 'subscriptions';
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
+  //returns sum of the cost column from subs table
   Future<Object?> getSum() async {
     Database db = await instance.database;
     Object? sum = '';
