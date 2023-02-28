@@ -1,4 +1,6 @@
-# Mobile App Dev Project 1
+Commits after the 17th commit are changes made as my own personal project and doesn't need to be taken into account for the project grading.
+
+# Mobile App Dev Project 1 (up to commit 17 with message - 'added more comments')
 
 A Tale of Two Tables
 
